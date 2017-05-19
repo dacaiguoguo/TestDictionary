@@ -8,50 +8,38 @@
 
 #import <Foundation/Foundation.h>
 #import "MyProxy.h"
-#include <objc/runtime.h>
-#include <objc/objc-exception.h>
-
-int my_exception_matcher(Class match_class, id exception)
-{
-    /* Always matches.  */
-    return 1;
-}
-
-static unsigned int handlerExpected = 1;
-
-void my_exception_handler(id excp)
-{
-    /* Returning from the handler would abort.  */
-    if (handlerExpected) {
-        exit(0);
-    }
-
-
-    //abort();
-}
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-
-        objc_setExceptionMatcher (my_exception_matcher);
-        objc_setUncaughtExceptionHandler (my_exception_handler);
-
-
         NSMutableDictionary *mut = [MyProxy proxyForObject:[NSMutableDictionary dictionary]];
+        NSMutableArray *mutArray = [MyProxy proxyForObject:[NSMutableArray arrayWithObjects:@(1),@(2),@(3), nil]];
 
         mut[@"testKey"] = nil;//object为nil 不会挂，底层实际调用下面的方法    建议使用
         [mut setObject:nil forKeyedSubscript:@"testKey"];//object为nil 不会挂,不应该直接调用
-        @try {
-            id testObj = nil;
-            [mut setObject:testObj forKey:@"testKey"];// object为nil会挂 老的写法 不建议使用
-        } @catch (NSException *exception) {
 
-        } @finally {
-            
-        }
+        id testObj = @(1);
+        [mut setObject:testObj forKey:@"testKey"];// object为nil会挂 老的写法 不建议使用
+        mutArray[1] = @(4);
 
-
+       [mutArray setObject:@(4) atIndexedSubscript:1];
         //key 为nil 两种写法都会挂
+
+        ChinaProvinceList *list = [[ChinaProvinceList alloc] init];
+        Province *hebei = [[Province alloc] init];
+        hebei.name = @"河北";
+        hebei.shortName = @"冀";
+        list[0] = hebei;
+
+        Province *shanghai = [[Province alloc] init];
+        shanghai.name = @"上海";
+        shanghai.shortName = @"沪";
+        list[1] = shanghai;
+
+        Province *beijing = [[Province alloc] init];
+        beijing.name = @"北京";
+        beijing.shortName = @"京";
+        list[@"首都"] = beijing;
+
 
         NSLog(@"Hello, World!");
     }
